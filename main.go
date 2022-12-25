@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-redis/redis"
 	"log"
 	"net/http"
 
 	"github.com/alonelegion/api_golang_mongodb/config"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -50,21 +50,20 @@ func init() {
 		log.Fatal("Could not load environment variables", err)
 	}
 
-	ctx := context.Background()
+	ctx = context.TODO()
 
-	mongoConn := options.Client().ApplyURI(config.DBUri)
-	mongoClient, err := mongo.Connect(ctx, mongoConn)
+	mongoconn := options.Client().ApplyURI(config.DBUri)
+	mongoClient, err := mongo.Connect(ctx, mongoconn)
 	if err != nil {
 		panic(err)
 	}
-
 	if err := mongoClient.Ping(ctx, readpref.Primary()); err != nil {
 		panic(err)
 	}
 
 	fmt.Println("MongoDB successfully connected...")
 
-	redisClient := redis.NewClient(&redis.Options{
+	redisClient = redis.NewClient(&redis.Options{
 		Addr: config.RedisUri,
 	})
 	if _, err := redisClient.Ping(ctx).Result(); err != nil {
@@ -78,5 +77,6 @@ func init() {
 
 	fmt.Println("Redis client connected successfully...")
 
+	gin.SetMode(gin.ReleaseMode)
 	server = gin.Default()
 }
