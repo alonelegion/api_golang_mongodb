@@ -6,6 +6,10 @@ import (
 	"net/http"
 
 	"github.com/alonelegion/api_golang_mongodb/config"
+	"github.com/alonelegion/api_golang_mongodb/controllers"
+	"github.com/alonelegion/api_golang_mongodb/routes"
+	"github.com/alonelegion/api_golang_mongodb/services"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -19,6 +23,15 @@ var (
 	ctx         context.Context
 	mongoClient *mongo.Client
 	redisClient *redis.Client
+
+	userService         services.UserService
+	UserController      controllers.UserController
+	UserRouteController routes.UserRouteController
+
+	authCollection      *mongo.Collection
+	authService         services.AuthService
+	AuthController      controllers.AuthController
+	AuthRouteController routes.AuthRouteController
 )
 
 func main() {
@@ -36,11 +49,19 @@ func main() {
 		panic(err)
 	}
 
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost:8000", "http://localhost:3000"}
+	corsConfig.AllowCredentials = true
+
+	server.Use(cors.New(corsConfig))
+
 	router := server.Group("/api")
 	router.GET("/healthchecker", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{"status": "success", "message": value})
 	})
 
+	AuthRouteController.AuthRoute(router, userService)
+	UserRouteController.UserRoute(router, userService)
 	log.Fatal(server.Run(":" + config.Port))
 }
 
@@ -76,6 +97,16 @@ func init() {
 	}
 
 	fmt.Println("Redis client connected successfully...")
+
+	// Collection
+	authCollection = mongoClient.Database("golang_mongodb").Collection("users")
+	userService = services.NewUserServiceImpl(authCollection, ctx)
+	authService = services.NewAuthService(authCollection, ctx)
+	AuthController = controllers.NewAuthController(authService, userService)
+	AuthRouteController = routes.NewAuthRouteController(AuthController)
+
+	UserController = controllers.NewUserController(userService)
+	UserRouteController = routes.NewRouteUserController(UserController)
 
 	gin.SetMode(gin.ReleaseMode)
 	server = gin.Default()
