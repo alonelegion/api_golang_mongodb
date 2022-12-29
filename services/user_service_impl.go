@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/alonelegion/api_golang_mongodb/models"
@@ -49,4 +50,31 @@ func (us UserServiceImpl) FindUserByEmail(email string) (*models.DBResponse, err
 	}
 
 	return user, nil
+}
+
+func (us UserServiceImpl) UpdateUserById(id, field, value string) (*models.DBResponse, error) {
+	userId, _ := primitive.ObjectIDFromHex(id)
+	query := bson.D{{Key: "_id", Value: userId}}
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: field, Value: value}}}}
+	result, err := us.collection.UpdateOne(us.ctx, query, update)
+	fmt.Print(result.ModifiedCount)
+	if err != nil {
+		fmt.Println(err)
+		return &models.DBResponse{}, err
+	}
+
+	return &models.DBResponse{}, nil
+}
+
+func (us UserServiceImpl) UpdateOne(field string, value interface{}) (*models.DBResponse, error) {
+	query := bson.D{{Key: field, Value: value}}
+	update := bson.D{{Key: "$key", Value: bson.D{{Key: field, Value: value}}}}
+	result, err := us.collection.UpdateOne(us.ctx, query, update)
+	fmt.Println(result.ModifiedCount)
+	if err != nil {
+		fmt.Println(err)
+		return &models.DBResponse{}, err
+	}
+
+	return &models.DBResponse{}, nil
 }
