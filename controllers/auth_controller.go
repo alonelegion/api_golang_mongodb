@@ -183,8 +183,8 @@ func (ac *AuthController) VerifyEmail(ctx *gin.Context) {
 	verificationCode := utils.Encode(code)
 
 	query := bson.D{{Key: "verificationCode", Value: verificationCode}}
-	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "verified", Value: true}}},
+	update := bson.D{
+		{Key: "$set", Value: bson.D{{Key: "verified", Value: true}}},
 		{Key: "$unset", Value: bson.D{{Key: "verificationCode", Value: ""}}}}
 	result, err := ac.collection.UpdateOne(ac.ctx, query, update)
 	if err != nil {
