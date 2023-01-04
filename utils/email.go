@@ -3,8 +3,11 @@ package utils
 import (
 	"bytes"
 	"crypto/tls"
+	"fmt"
 	"html/template"
+	"io/fs"
 	"log"
+	"path/filepath"
 
 	"github.com/alonelegion/api_golang_mongodb/config"
 	"github.com/alonelegion/api_golang_mongodb/models"
@@ -54,4 +57,24 @@ func SendEmail(user *models.DBResponse, data *EmailData, temp *template.Template
 	}
 
 	return nil
+}
+
+func ParseTemplateDir(dir string) (*template.Template, error) {
+	var paths []string
+	err := filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+
+	fmt.Println("Am parsing templates...")
+	if err != nil {
+		return nil, err
+	}
+
+	return template.ParseFiles(paths...)
 }
