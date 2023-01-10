@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package pb;
+
+import "rpc_signup_user.proto";
+import "user.proto";
+
+option go_package = "github.com/alonelegion/api_golang_mongodb/pb";
+
+service AuthService {
+  rpc SignUpUser(SignUpUserInput) returns (GenericResponse) {}
+  rpc VerifyEmail(VerifyEmailRequest) returns (GenericResponse) {}
+}
