@@ -115,3 +115,27 @@ func init() {
 	gin.SetMode(gin.ReleaseMode)
 	server = gin.Default()
 }
+
+func StartGinServer(config config.Config) {
+	value, err := redisClient.Get(ctx, "test").Result()
+	if err == redis.Nil {
+		fmt.Println("key: test does not exist")
+	} else if err != nil {
+		panic(err)
+	}
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{config.Origin}
+	corsConfig.AllowCredentials = true
+
+	server.Use(cors.New(corsConfig))
+
+	router := server.Group("/api")
+	router.GET("/healthchecker", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "success", "message": value})
+	})
+
+	AuthRouteController.AuthRoute(router, userService)
+	UserRouteController.UserRoute(router, userService)
+	log.Fatal(server.Run(":" + config.Port))
+}
